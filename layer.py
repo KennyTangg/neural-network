@@ -11,6 +11,7 @@ class DenseLayer:
     def forward(self, inputs):
         ''' 
         Linear Transformation 
+        
         Z = XW + b
 
         X : inputs (n_samples, n_features)
