@@ -1,2 +1,7 @@
+# virtual environment
 venv/
 nnfs/
+
+# python cache files 
+__pycache__/
+*.pyc
