@@ -1,4 +1,5 @@
 import numpy as np
+from activations import SoftMax
 
 class Loss:
     def calculate(self, y_hat, y):
@@ -42,3 +43,70 @@ class CategoricalCrossEntropyLoss(Loss):
         # Compute per-sample using cross-entropy losses formula
         sample_losses = -np.log(target_probs)
         return sample_losses 
+
+    def backward(self, dy_hat, y):
+        ''' 
+        Gradient of loss
+
+        (- y / y_hat) * (1 / N)
+
+        y : one-hot encoded
+        y_hat : predicted probabilities
+
+        '''
+
+        # number of samples in current batch
+        samples = len(dy_hat)
+
+        labels = len(dy_hat[0])
+        # If labels are discrete values, turn to one-hot encoded
+        if len(y.shape) == 1:
+            # create identity matrix of size y
+            y = np.eye(labels)[y]
+
+        # calculate gradient
+        self.dinputs = - y / dy_hat
+
+        # normalize (calculate the average)
+        self.dinputs = self.dinputs / samples
+
+# Softmax activation and cross-entropy loss combined for faster backpropagation
+class CategoricalCrossEntropyLoss_SoftMax(Loss):
+
+    def __init__(self):
+        # create activation and loss function objects
+        self.activation = SoftMax() 
+        self.loss = CategoricalCrossEntropyLoss()
+
+    def forward(self, inputs, y):
+        # output layer activation function 
+        self.activation.forward(inputs) 
+        self.output = self.activation.output
+
+        # calculate average and return loss value
+        return self.loss.calculate(self.output, y)
+
+    def backward(self, dy_hat, y):
+        ''' 
+        Gradient of loss 
+
+        (y_hat - y) / N
+         
+        y : discrete class indices
+        y_hat : predicted probabilities 
+        '''
+
+        # number of samples in current batch
+        samples = len(dy_hat)
+
+        # if labels are one-hot encoded, turn to discrete values
+        if len(y.shape) == 2:
+            y = np.argmax(y, axis=1)
+
+        self.dinputs = dy_hat.copy()
+
+        # calculate gradient
+        self.dinputs[range(samples), y] -= 1
+
+        # normalize (calculate the average)
+        self.dinputs = self.dinputs / samples
