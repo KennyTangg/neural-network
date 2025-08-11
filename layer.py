@@ -56,3 +56,21 @@ class DenseLayer:
             self.dbiases += 2 * self.bias_regularizer_L2 * self.biases
     
         self.dinputs = np.dot(dvalues, self.weights.T)
+
+class DropoutLayer:
+    def __init__(self, rate):
+        self.rate = 1 - rate
+
+    def forward(self, inputs, training=True):
+        self.inputs = inputs
+        if training:
+            # Create dropout mask and scale
+            self.binary_mask = np.random.binomial(1, self.rate, size=inputs.shape) / self.rate
+            self.output = inputs * self.binary_mask
+        else:
+            # No dropout during testing / inference 
+            self.binary_mask = np.ones_like(inputs)
+            self.output = inputs
+    
+    def backward(self, dvalues):
+        self.dinputs = dvalues * self.binary_mask
