@@ -27,10 +27,49 @@ class Loss:
             regularization_loss += layer.bias_regularizer_L2 * np.sum(layer.biases * layer.biases)
 
         return regularization_loss
+    
+class BinaryCrossEntropy(Loss):
+    '''
+    Binary Cross-Entropy Loss
+
+    Loss = - [ y * log(y_hat) + (1 - y) * log(1 - y_hat) ]
+
+    y : target output, can be 
+        - 1D or 2D array with binary class labels (0 or 1)
+        - shape (n_samples,) or (n_samples, n_outputs)
+
+    y_hat : predicted probabilities (n_samples, n_outputs)
+        - values between 0 and 1
+    '''
+
+    def forward(self, y_hat, y):
+        # clip data to prevent log(0)
+        y_hat_clipped = np.clip(y_hat, 1e-10, 1 - 1e-10)
+
+        # calculate per sample loss
+        sample_losses = -(y * np.log(y_hat_clipped) + (1 - y) * np.log(1 - y_hat_clipped))
+        sample_losses = np.mean(sample_losses, axis=-1)
+
+        return sample_losses
+    
+    def backward(self, dvalues, y):
+        # number of samples
+        samples = len(dvalues)
+        # number of output
+        outputs = len(dvalues[0])
+
+        # prevent division by 0
+        clipped_dvalues = np.clip(dvalues, 1e-10, 1 - 1e-10)
+
+        # calculate gradient
+        self.dinputs = -(y / clipped_dvalues - (1 - y) / (1 - clipped_dvalues)) / outputs
+        # normalize gradient
+        self.dinputs = self.dinputs / samples
+
 class CategoricalCrossEntropyLoss(Loss):
     '''
     Categorical Cross-Entropy Loss
-]
+
     Loss = - ∑ (y_i * log(y_hat_i))
 
     y : target output, can be 
