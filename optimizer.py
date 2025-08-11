@@ -1,7 +1,23 @@
 import numpy as np
 
 class SGD:
-    # Initialize optimizer
+    '''
+    Stochastic Gradient Descent (SGD)
+
+    Velocity update (momentum term):
+        v_t = momentum * v_{t-1} + learning_rate * gradient
+
+    Parameter update:
+        W_t = W_{t-1} - v_t
+
+    W_t       = updated parameter
+    W_{t-1}   = previous parameter
+    v_t       = velocity (weighted average of gradients)
+    momentum  = momentum hyperparameter (usually between 0 and 1)
+    learning_rate = step size for updates
+    gradient  = derivative of loss w.r.t parameters
+    '''
+
     def __init__(self, learning_rate = 1, decay = 0, momentum = 0):
         self.learning_rate = learning_rate
         self.current_learning_rate = learning_rate
@@ -17,7 +33,7 @@ class SGD:
     # update parameters
     def update_params(self, layer):
 
-        # use momentum update
+        # use momentum SGD update
         if self.momentum:
             # if layer doesn't have momentum arrays, create arrays filled with 0s
             if not hasattr(layer, 'weight_momentums'):
@@ -32,12 +48,12 @@ class SGD:
             bias_updates = self.momentum * layer.bias_momentums - self.current_learning_rate * layer.dbiases
             layer.bias_momentums = bias_updates
             
-        # use normal update
+        # use normal SGD update
         else:
-            weight_updates = - self.current_learning_rate * layer.dweights
-            bias_updates = - self.current_learning_rate * layer.dbiases
+            weight_updates = -self.current_learning_rate * layer.dweights
+            bias_updates = -self.current_learning_rate * layer.dbiases
 
-        # update weights and biases using either normal or momentum update
+        # update weights and biases 
         layer.weights += weight_updates
         layer.biases += bias_updates
     
@@ -46,6 +62,23 @@ class SGD:
         self.iterations += 1
 
 class AdaGrad:
+    '''
+    Adaptive Gradient Algorithm (AdaGrad)
+
+    Cache Update (sum of squared gradients): 
+        G_t = G_{t-1} + (gradient)^2
+    
+    Parameter update :
+        W_t = W_{t-1} - (learning_rate / (sqrt(G_t) + epsilon)) * gradient
+
+    W_t           = updated parameter
+    W_{t-1}       = previous parameter
+    G_t           = sum of squares of previous gradients
+    learning_rate = step size for updates
+    epsilon       = small constant to avoid division by zero
+    gradient      = derivative of loss w.r.t parameters
+    decay         = optional learning rate decay 
+    '''
     def __init__(self, learning_rate = 1.0, decay = 0.0, epsilon = 1e-10):
         self.learning_rate = learning_rate
         self.current_learning_rate = learning_rate
@@ -53,7 +86,7 @@ class AdaGrad:
         self.iterations = 0
         self.epsilon = epsilon 
 
-    # call once before any parameters updates
+    # optional explicit decay for the learning rate
     def pre_update_params(self):
         if self.decay:
             self.current_learning_rate = self.learning_rate * (1.0 / (1.0 + self.decay * self.iterations))
@@ -78,6 +111,24 @@ class AdaGrad:
         self.iterations += 1
 
 class RMSprop:
+    '''
+    Root Mean Square Propagation (RMSProp)
+
+    Cache Update (exponentially weighted squared gradients):
+        G_t = rho * G_{t-1} + (1 - rho) * (gradient)^2
+
+    Parameter update:
+        W_t = W_{t-1} - (learning_rate / (sqrt(G_t) + epsilon)) * gradient
+
+    W_t           = updated parameter
+    W_{t-1}       = previous parameter
+    G_t           = exponentially weighted moving average of squared gradients
+    rho           = decay rate for moving average (e.g., 0.9)
+    learning_rate = step size for updates
+    epsilon       = small constant to avoid division by zero
+    gradient      = derivative of loss w.r.t parameters
+    decay         = optional learning rate decay 
+    '''
     def __init__(self, learning_rate = 0.001 , decay = 0.0, epsilon = 1e-8, rho = 0.9):
         self.learning_rate = learning_rate
         self.current_learning_rate = learning_rate
@@ -86,7 +137,7 @@ class RMSprop:
         self.epsilon = epsilon 
         self.rho = rho
 
-    # call once before any parameters updates
+    # optional explicit decay for the learning rate
     def pre_update_params(self):
         if self.decay:
             self.current_learning_rate = self.learning_rate * (1.0 / (1.0 + self.decay * self.iterations))
@@ -112,6 +163,34 @@ class RMSprop:
         self.iterations += 1
 
 class Adam:
+    '''
+    Adaptive Moment Estimation (Adam)
+
+    Momentum update (first moment estimate):
+        m_t = β₁ * m_{t-1} + (1 - β₁) * g_t
+    Bias-corrected first moment:
+        m̂_t = m_t / (1 - β₁^t)
+
+    Cache update (second moment estimate):
+        v_t = β₂ * v_{t-1} + (1 - β₂) * g_t²
+    Bias-corrected second moment:
+        v̂_t = v_t / (1 - β₂^t)
+
+    Parameter update:
+        W_t = W_{t-1} - (learning_rate * m̂_t) / (sqrt(v̂_t) + epsilon)
+
+    W_t           = updated parameter
+    W_{t-1}       = previous parameter
+    g_t           = current gradient
+    m_t           = first moment (running average of gradients)
+    v_t           = second moment (running average of squared gradients)
+    β₁, β₂        = decay rates for moments (default β₁=0.9, β₂=0.999)
+    m̂_t, v̂_t     = bias-corrected moments
+    learning_rate = step size for updates
+    epsilon       = small constant to avoid division by zero
+    decay         = optional learning rate decay factor
+    '''
+
     def __init__(self, learning_rate = 0.001 , decay = 0.0, epsilon = 1e-8, beta_1 = 0.9, beta_2 = 0.999):
         self.learning_rate = learning_rate
         self.current_learning_rate = learning_rate
