@@ -2,34 +2,50 @@ import numpy as np
 from activations import SoftMax
 
 class Loss:
-    def calculate(self, y_hat, y):
+    def calculate(self, output, y, *, include_regularization = False):
         '''
         calculate the average loss from all sample in the batch 
         '''
-        sample_losses = self.forward(y_hat, y)
+        # calculate sample losses
+        sample_losses = self.forward(output, y)
 
+        # calculate mean loss
         data_loss = np.mean(sample_losses)
-        return data_loss
+
+        # return data loss
+        if not include_regularization:
+            return data_loss
+
+        # return both
+        return data_loss, self.regularization_loss()
     
-    def regularization_loss(self, layer):
+    def regularization_loss(self):
+        # 0 by default
         regularization_loss = 0 
+        for layer in self.trainable_layers:
+            # L1 regularization - weights
+            if layer.weight_regularizer_L1 > 0:
+                regularization_loss += layer.weight_regularizer_L1 * np.sum(np.abs(layer.weights))
 
-        if layer.weight_regularizer_L1 > 0:
-            regularization_loss += layer.weight_regularizer_L1 * np.sum(np.abs(layer.weights))
+            # L2 regularization - weights
+            if layer.weight_regularizer_L2 > 0:
+                regularization_loss += layer.weight_regularizer_L2 * np.sum(layer.weights * layer.weights)
+            
+            # L1 regularization - biases 
+            if layer.bias_regularizer_L1 > 0:
+                regularization_loss += layer.bias_regularizer_L1 * np.sum(np.abs(layer.weights))
 
-        if layer.weight_regularizer_L2 > 0:
-            regularization_loss += layer.weight_regularizer_L2 * np.sum(layer.weights * layer.weights)
-        
-        if layer.bias_regularizer_L1 > 0:
-            regularization_loss += layer.bias_regularizer_L1 * np.sum(np.abs(layer.weights))
-
-        if layer.bias_regularizer_L2 > 0:
-            regularization_loss += layer.bias_regularizer_L2 * np.sum(layer.biases * layer.biases)
+            # L2 regularization - biases 
+            if layer.bias_regularizer_L2 > 0:
+                regularization_loss += layer.bias_regularizer_L2 * np.sum(layer.biases * layer.biases)
 
         return regularization_loss
     
+    def remember_trainable_layers(self, trainable_layers):
+        self.trainable_layers = trainable_layers
+        
 class MeanSquareError(Loss):
-
+    # L2 loss
     def forward(self, y_hat, y):
         # calculate losses
         sample_losses = np.mean((y - y_hat) ** 2, axis=-1)
@@ -38,6 +54,7 @@ class MeanSquareError(Loss):
     def backward(self, dy_hat, y):
         # number of samples
         samples = len(dy_hat)
+        # number of output for every sample
         outputs = len(dy_hat[0])
 
         # gradient on values
@@ -45,6 +62,21 @@ class MeanSquareError(Loss):
         # normalize gradient
         self.dinputs = self.dinputs / samples
 
+class MeanAbsoluteError(Loss):
+    def forward(self, y_hat, y):
+        # calculate losses
+        sample_losses = np.mean(np.abs(y_hat - y), axis = -1)
+        return sample_losses
+    
+    def backward(self, dvalues, y):
+        # number of samples
+        samples = len(dvalues)
+        outputs = len(dvalues[0])
+
+        # calculate gradient
+        self.dinputs = np.sign(y - dvalues) / outputs
+        # normalize gradient 
+        self.dinputs = self.dinputs / samples
 class BinaryCrossEntropy(Loss):
     '''
     Binary Cross-Entropy Loss

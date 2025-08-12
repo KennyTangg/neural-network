@@ -3,8 +3,8 @@ import numpy as np
 class DenseLayer:
     # Layer initialization
     def __init__(self, n_inputs, n_outputs, 
-        weight_regularizer_L1=0, weight_regularizer_L2=0,
-        bias_regularizer_L1=0, bias_regularizer_L2=0):
+                weight_regularizer_L1=0, weight_regularizer_L2=0,
+                bias_regularizer_L1=0, bias_regularizer_L2=0):
         # Random weights and many 0s biases
         self.weights = np.random.randn(n_inputs, n_outputs) * 0.01
         self.biases = np.zeros((1, n_outputs)) 
@@ -15,7 +15,7 @@ class DenseLayer:
         self.bias_regularizer_L2 = bias_regularizer_L2
 
     # forward pass 
-    def forward(self, inputs):
+    def forward(self, inputs, training):
         ''' 
         Linear Transformation 
         
@@ -61,7 +61,7 @@ class DropoutLayer:
     def __init__(self, rate):
         self.rate = 1 - rate
 
-    def forward(self, inputs, training=True):
+    def forward(self, inputs, training):
         self.inputs = inputs
         if training:
             # Create dropout mask and scale
@@ -73,4 +73,10 @@ class DropoutLayer:
             self.output = inputs
     
     def backward(self, dvalues):
+        # gradient on values
         self.dinputs = dvalues * self.binary_mask
+    
+class InputLayer:
+    def forward(self, inputs, training):
+        self.output = inputs
+

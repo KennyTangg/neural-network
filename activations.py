@@ -1,13 +1,16 @@
 import numpy as np
 
 class Linear:
-    def forward(self, inputs):
+    def forward(self, inputs, training):
         self.inputs = inputs
         self.output = inputs
     
     def backward(self, dvalues):
         # derivative is 1 
         self.dinputs = dvalues.copy()
+    
+    def predictions(self, outputs):
+        return outputs
 
 class Sigmoid:
     '''
@@ -20,7 +23,7 @@ class Sigmoid:
     x              = input to the activation function
     exp            = exponential function (e)
     '''
-    def forward(self, inputs):
+    def forward(self, inputs, training):
         self.inputs = inputs
         # between 0 and 1
         self.output = 1 / (1 + np.exp(-inputs))
@@ -28,6 +31,9 @@ class Sigmoid:
     def backward(self, dvalues):
         # derivative - calculates from output of the sigmoid function
         self.dinputs = dvalues * (1 - self.output) * self.output
+
+    def predictions(self, outputs):
+        return (outputs > 0.5)  * 1
 
 class ReLU:
     '''
@@ -41,7 +47,7 @@ class ReLU:
 
     '''
 
-    def forward(self, inputs):
+    def forward(self, inputs, training):
         self.inputs = inputs
         # between 0 and positive numbers
         self.output = np.maximum(0, inputs)
@@ -50,6 +56,9 @@ class ReLU:
         self.dinputs = dvalues.copy()
         # Zero gradient where input values are negative 
         self.dinputs[self.inputs <= 0] = 0
+
+    def predictions(self, outputs):
+        return outputs
 
 class SoftMax:
     '''
@@ -64,7 +73,7 @@ class SoftMax:
 
     '''
 
-    def forward(self, inputs):
+    def forward(self, inputs, training):
         self.inputs = inputs
 
         # get unnormalized values
@@ -86,3 +95,6 @@ class SoftMax:
             jacobian_matrix = np.diagflat(single_output) - np.dot(single_output, single_output.T)
             # apply chain rule , multiply jacobian matrix by gradient from the next layer
             self.dinputs[index] = np.dot(jacobian_matrix, single_dvalues)
+
+    def predictions(self, outputs):
+        return np.argmax(outputs, axis=1)
