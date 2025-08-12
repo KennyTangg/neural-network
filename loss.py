@@ -28,6 +28,23 @@ class Loss:
 
         return regularization_loss
     
+class MeanSquareError(Loss):
+
+    def forward(self, y_hat, y):
+        # calculate losses
+        sample_losses = np.mean((y - y_hat) ** 2, axis=-1)
+        return sample_losses
+
+    def backward(self, dy_hat, y):
+        # number of samples
+        samples = len(dy_hat)
+        outputs = len(dy_hat[0])
+
+        # gradient on values
+        self.dinputs = -2 * (y - dy_hat) / outputs
+        # normalize gradient
+        self.dinputs = self.dinputs / samples
+
 class BinaryCrossEntropy(Loss):
     '''
     Binary Cross-Entropy Loss
@@ -52,14 +69,14 @@ class BinaryCrossEntropy(Loss):
 
         return sample_losses
     
-    def backward(self, dvalues, y):
+    def backward(self, dy_hat, y):
         # number of samples
-        samples = len(dvalues)
+        samples = len(dy_hat)
         # number of output
-        outputs = len(dvalues[0])
+        outputs = len(dy_hat[0])
 
         # prevent division by 0
-        clipped_dvalues = np.clip(dvalues, 1e-10, 1 - 1e-10)
+        clipped_dvalues = np.clip(dy_hat, 1e-10, 1 - 1e-10)
 
         # calculate gradient
         self.dinputs = -(y / clipped_dvalues - (1 - y) / (1 - clipped_dvalues)) / outputs
