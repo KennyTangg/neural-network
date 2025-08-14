@@ -12,6 +12,10 @@ class Loss:
         # calculate mean loss
         data_loss = np.mean(sample_losses)
 
+        # add accumulated sum of losses and sample count
+        self.accumulated_sum += np.sum(sample_losses)
+        self.accumulated_count += len(sample_losses)
+
         # return data loss
         if not include_regularization:
             return data_loss
@@ -19,9 +23,25 @@ class Loss:
         # return both
         return data_loss, self.regularization_loss()
     
+    def calculate_accumulated(self, *, include_regularization = False):
+        # calculate mean loss
+        data_loss = self.accumulated_sum / self.accumulated_count
+
+        # if just data loss return it
+        if not include_regularization:
+            return data_loss
+        
+        return data_loss, self.regularization_loss()
+
+    def new_pass(self):
+        # reset variables for accumulated loss
+        self.accumulated_sum = 0 
+        self.accumulated_count = 0 
+
     def regularization_loss(self):
         # 0 by default
         regularization_loss = 0 
+
         for layer in self.trainable_layers:
             # L1 regularization - weights
             if layer.weight_regularizer_L1 > 0:
@@ -77,6 +97,7 @@ class MeanAbsoluteError(Loss):
         self.dinputs = np.sign(y - dvalues) / outputs
         # normalize gradient 
         self.dinputs = self.dinputs / samples
+
 class BinaryCrossEntropy(Loss):
     '''
     Binary Cross-Entropy Loss

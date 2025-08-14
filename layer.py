@@ -63,15 +63,18 @@ class DropoutLayer:
 
     def forward(self, inputs, training):
         self.inputs = inputs
-        if training:
-            # Create dropout mask and scale
-            self.binary_mask = np.random.binomial(1, self.rate, size=inputs.shape) / self.rate
-            self.output = inputs * self.binary_mask
-        else:
-            # No dropout during testing / inference 
-            self.binary_mask = np.ones_like(inputs)
-            self.output = inputs
-    
+
+        # If not in the training mode - return values
+        if not training:
+            self.output = inputs.copy()
+            return
+
+        # Create dropout mask and scale
+        self.binary_mask = np.random.binomial(1, self.rate, size=inputs.shape) / self.rate
+        
+        # Apply mask to output values
+        self.output = inputs * self.binary_mask
+
     def backward(self, dvalues):
         # gradient on values
         self.dinputs = dvalues * self.binary_mask
