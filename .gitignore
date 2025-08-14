@@ -1,7 +1,26 @@
-# virtual environment
+# Virtual environment
 venv/
-nnfs/
+.env/
+.venv/
 
-# python cache files 
+# Python cache files
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Data
+data/
+fashion_mnist_images/
+*.png
+*.jpg
+*.jpeg
+*.csv
+*.npz
+
+# OS generated files
+.DS_Store
+Thumbs.db
