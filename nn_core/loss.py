@@ -1,5 +1,5 @@
 import numpy as np
-from activations import SoftMax
+from .activations import SoftMax
 
 class Loss:
     def calculate(self, output, y, *, include_regularization = False):

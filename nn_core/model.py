@@ -1,6 +1,6 @@
-from layer import *
-from loss import *
-from activations import *
+from .layer import *
+from .loss import *
+from .activations import *
 
 class Model:
     def __init__(self):
@@ -61,6 +61,14 @@ class Model:
     
     # Train the model
     def train(self, X, y, *, epochs = 1,batch_size = None,  print_every = 1, validation_data = None):
+        # track metrics
+        self.history = {
+            'train_acc': [],
+            'train_loss': [],
+            'val_acc': [],
+            'val_loss': []
+        }
+
         # initialize accuracy object 
         self.accuracy.init(y)
 
@@ -147,6 +155,10 @@ class Model:
                   f'reg_loss: {epoch_regularization_loss:.3f}), ' +
                   f'lr: {self.optimizer.current_learning_rate}')
             
+            # save train metrics
+            self.history['train_acc'].append(epoch_accuracy)
+            self.history['train_loss'].append(epoch_loss)
+            
             if validation_data is not None:
                 # reset accumulated values in loss
                 self.loss.new_pass()
@@ -179,6 +191,11 @@ class Model:
                 print(f'validation : ' +
                     f'acc: {validation_accuracy:.3f}, ' +
                     f'loss: {validation_loss:.3f}\n')
+                
+
+                # save val metrics
+                self.history['val_acc'].append(validation_accuracy)
+                self.history['val_loss'].append(validation_loss)
     
     def forward(self, X, training):
         # call forward method on input layer
